@@ -21,7 +21,7 @@ jobs:
           echo "=== dcloud_inc ==="
           ls -la dcloud_inc || true
 
-      - name: Build static framework
+      - name: Build static framework (iphoneos arm64 only)
         shell: bash
         run: |
           set -euo pipefail
@@ -33,11 +33,9 @@ jobs:
           SRC="$ROOT/src/PhotoScanner.m"
 
           rm -rf "$OUT" "$BUILD"
-          mkdir -p "$OUT" "$BUILD/iphoneos" "$BUILD/iphonesimulator"
+          mkdir -p "$OUT" "$BUILD/iphoneos"
 
           IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-
           COMMON_FLAGS="-fobjc-arc -fmodules -ObjC -I$INC"
 
           xcrun clang -c "$SRC" \
@@ -46,34 +44,13 @@ jobs:
             $COMMON_FLAGS \
             -o "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
-          xcrun clang -c "$SRC" \
-            -arch arm64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            $COMMON_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
-
-          xcrun clang -c "$SRC" \
-            -arch x86_64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            $COMMON_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
-
           libtool -static -o "$BUILD/iphoneos/PhotoScanner" \
             "$BUILD/iphoneos/PhotoScanner_arm64.o"
-
-          libtool -static -o "$BUILD/iphonesimulator/PhotoScanner_sim" \
-            "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o" \
-            "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
-
-          lipo -create \
-            "$BUILD/iphoneos/PhotoScanner" \
-            "$BUILD/iphonesimulator/PhotoScanner_sim" \
-            -output "$OUT/PhotoScanner"
 
           FW="$OUT/PhotoScanner.framework"
           mkdir -p "$FW/Headers" "$FW/Modules"
 
-          cp "$OUT/PhotoScanner" "$FW/PhotoScanner"
+          cp "$BUILD/iphoneos/PhotoScanner" "$FW/PhotoScanner"
           cp "$ROOT/src/PhotoScanner.h" "$FW/Headers/PhotoScanner.h"
 
           cat > "$FW/Modules/module.modulemap" <<'EOF'
