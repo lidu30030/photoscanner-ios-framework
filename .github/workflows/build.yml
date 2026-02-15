@@ -10,6 +10,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug list
+        shell: bash
+        run: |
+          set -e
+          pwd
+          ls -la
+          echo "=== src ==="
+          ls -la src
+          echo "=== dcloud_inc ==="
+          ls -la dcloud_inc
+
       - name: Build static framework
         shell: bash
         run: |
@@ -29,28 +40,24 @@ jobs:
 
           COMMON_FLAGS="-fobjc-arc -fmodules -ObjC -I$INC"
 
-          # iphoneos arm64
           xcrun clang -c "$SRC" \
             -arch arm64 -isysroot "$IOS_SDK" \
             -miphoneos-version-min=12.0 \
             $COMMON_FLAGS \
             -o "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
-          # simulator arm64
           xcrun clang -c "$SRC" \
             -arch arm64 -isysroot "$SIM_SDK" \
             -mios-simulator-version-min=12.0 \
             $COMMON_FLAGS \
             -o "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
 
-          # simulator x86_64
           xcrun clang -c "$SRC" \
             -arch x86_64 -isysroot "$SIM_SDK" \
             -mios-simulator-version-min=12.0 \
             $COMMON_FLAGS \
             -o "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
 
-          # create static libs
           libtool -static -o "$BUILD/iphoneos/PhotoScanner" \
             "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
@@ -58,13 +65,11 @@ jobs:
             "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o" \
             "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
 
-          # lipo fat
           lipo -create \
             "$BUILD/iphoneos/PhotoScanner" \
             "$BUILD/iphonesimulator/PhotoScanner_sim" \
             -output "$OUT/PhotoScanner"
 
-          # assemble framework
           FW="$OUT/PhotoScanner.framework"
           mkdir -p "$FW/Headers" "$FW/Modules"
 
