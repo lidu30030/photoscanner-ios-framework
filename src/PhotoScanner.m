@@ -27,13 +27,15 @@
         return;
     }
 
-    if (st != PHAuthorizationStatusAuthorized
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 140000
-        && st != PHAuthorizationStatusLimited
-#endif
-    ) {
+    BOOL ok = (st == PHAuthorizationStatusAuthorized);
+    if (!ok) {
+        if (@available(iOS 14.0, *)) {
+            if (st == PHAuthorizationStatusLimited) ok = YES;
+        }
+    }
+    if (!ok) {
         PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusError messageAsDictionary:@{ @"msg": @"no_permission", @"st": @(st) }];
-        [self toCallback:command.callbackId withReslut:[res toJSONString]];
+        [self toCallback:command.callBackID withReslut:[res toJSONString]];
         return;
     }
 
@@ -66,7 +68,7 @@
     }
 
     PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsArray:out];
-    [self toCallback:command.callbackId withReslut:[res toJSONString]];
+    [self toCallback:command.callBackID withReslut:[res toJSONString]];
 }
 
 @end
