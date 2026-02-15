@@ -17,9 +17,9 @@ jobs:
           pwd
           ls -la
           echo "=== src ==="
-          ls -la src
+          ls -la src || true
           echo "=== dcloud_inc ==="
-          ls -la dcloud_inc
+          ls -la dcloud_inc || true
 
       - name: Build static framework
         shell: bash
