@@ -57,7 +57,8 @@
 
         PHImageManager *mgr = [PHImageManager defaultManager];
         NSString *doc = [PDRCore appDocPath];
-        NSInteger max = limit > 0 ? MIN(assets.count, limit) : assets.count;
+        NSInteger totalAll = assets.count;
+        NSInteger max = limit > 0 ? MIN(totalAll, limit) : totalAll;
         NSInteger batch = 100;
         NSMutableArray *buf = [NSMutableArray arrayWithCapacity:batch];
 
