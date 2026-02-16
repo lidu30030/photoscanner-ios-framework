@@ -5,7 +5,10 @@
 @implementation PhotoScanner
 
 - (void)scan:(PGMethod *)command {
-    NSString *cb = command.callBackID;
+    NSString *cb = nil;
+    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
     if (!cb || cb.length <= 0) {
         if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
             cb = (NSString*)command.arguments[0];
