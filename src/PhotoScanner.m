@@ -48,6 +48,12 @@
         return;
     }
 
+    if (cb && cb.length > 0) {
+        PDRPluginResult *ping = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{ @"ping": @YES }];
+        ping.keepCallback = YES;
+        [self toCallback:cb withReslut:[ping toJSONString]];
+    }
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         PHFetchOptions *fetchOpt = [[PHFetchOptions alloc] init];
         fetchOpt.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO] ];
@@ -62,7 +68,8 @@
         NSString *doc = [PDRCore appDocPath];
         NSInteger totalAll = assets.count;
         NSInteger max = limit > 0 ? MIN(totalAll, limit) : totalAll;
-        NSInteger batch = 100;
+        NSInteger batch = [opt[@"batch"] integerValue];
+        if (batch <= 0) batch = 20;
         NSMutableArray *buf = [NSMutableArray arrayWithCapacity:batch];
 
         for (NSInteger i = 0; i < max; i++) {
@@ -73,16 +80,6 @@
                     data = imageData;
                 }];
                 if (!data || data.length <= 0) {
-                    if (buf.count > 0 && (buf.count >= batch)) {
-                        NSArray *chunk = [buf copy];
-                        [buf removeAllObjects];
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            if (!cb || cb.length <= 0) return;
-                            PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{ @"items": chunk, @"done": @NO, @"total": @(totalAll), @"plan": @(max) }];
-                            res.keepCallback = YES;
-                            [self toCallback:cb withReslut:[res toJSONString]];
-                        });
-                    }
                     continue;
                 }
 
