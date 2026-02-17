@@ -2,54 +2,19 @@
 #import <Photos/Photos.h>
 #import "PDRCore.h"
 
+#ifndef PHOTOSCANNER_BUILD
+#define PHOTOSCANNER_BUILD "2026-02-17_002"
+#endif
+
 @implementation PhotoScanner
 
-- (void)ping:(PGMethod *)command {
-    NSString *cb = nil;
-    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) {
-        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
-            cb = (NSString*)command.arguments[0];
-        }
-    }
-    if (!cb || cb.length <= 0) return;
-    PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{ @"ok": @YES, @"ver": @"2026-02-17_001" }];
-    [self toCallback:cb withReslut:[res toJSONString]];
-}
-
-- (void)scan:(PGMethod *)command {
-    NSString *cb = nil;
-    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) {
-        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
-            cb = (NSString*)command.arguments[0];
-        }
-    }
-    NSDictionary *opt = @{};
-    if ([command.arguments count] > 0) {
-        id a0 = command.arguments[0];
-        if ([a0 isKindOfClass:[NSDictionary class]]) {
-            opt = (NSDictionary *)a0;
-        } else if ([a0 isKindOfClass:[NSString class]] && [command.arguments count] > 1 && [command.arguments[1] isKindOfClass:[NSDictionary class]]) {
-            opt = (NSDictionary *)command.arguments[1];
-        }
-    }
+- (void)doScan:(NSString *)cb opt:(NSDictionary *)opt {
     NSInteger limit = [opt[@"limit"] integerValue];
     if (limit < 0) limit = 0;
 
-    PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
-    if (st == PHAuthorizationStatusNotDetermined) {
-        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self scan:command];
-            });
-        }];
-        return;
-    }
+    PHAuthorizationStatus st;
+    if (@available(iOS 14.0, *)) st = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+    else st = [PHPhotoLibrary authorizationStatus];
 
     BOOL ok = (st == PHAuthorizationStatusAuthorized);
     if (!ok) {
@@ -94,9 +59,7 @@
                 [mgr requestImageDataForAsset:a options:reqOpt resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
                     data = imageData;
                 }];
-                if (!data || data.length <= 0) {
-                    continue;
-                }
+                if (!data || data.length <= 0) continue;
 
                 NSString *name = [NSString stringWithFormat:@"ios_%lld_%ld.jpg", (long long)([[NSDate date] timeIntervalSince1970] * 1000), (long)i];
                 NSString *abs = [doc stringByAppendingPathComponent:name];
@@ -128,6 +91,83 @@
             [self toCallback:cb withReslut:[end toJSONString]];
         });
     });
+}
+
+- (void)ping:(PGMethod *)command {
+    NSString *cb = nil;
+    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) {
+        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
+            cb = (NSString*)command.arguments[0];
+        }
+    }
+    if (!cb || cb.length <= 0) return;
+
+    NSString *bundle = @"";
+    @try {
+        NSBundle *b = [NSBundle bundleForClass:[self class]];
+        bundle = b.bundleIdentifier ? b.bundleIdentifier : @"";
+    } @catch (NSException *e) {}
+
+    PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{
+        @"ok": @YES,
+        @"ver": @"2026-02-17_002",
+        @"build": @PHOTOSCANNER_BUILD,
+        @"date": @__DATE__,
+        @"time": @__TIME__,
+        @"bundle": bundle,
+        @"class": NSStringFromClass([self class])
+    }];
+    [self toCallback:cb withReslut:[res toJSONString]];
+}
+
+- (void)scan:(PGMethod *)command {
+    NSString *cb = nil;
+    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) {
+        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
+            cb = (NSString*)command.arguments[0];
+        }
+    }
+    NSDictionary *opt = @{};
+    if ([command.arguments count] > 0) {
+        id a0 = command.arguments[0];
+        if ([a0 isKindOfClass:[NSDictionary class]]) {
+            opt = (NSDictionary *)a0;
+        } else if ([a0 isKindOfClass:[NSString class]] && [command.arguments count] > 1 && [command.arguments[1] isKindOfClass:[NSDictionary class]]) {
+            opt = (NSDictionary *)command.arguments[1];
+        }
+    }
+
+    NSString *cb2 = cb ? [cb copy] : @"";
+    NSDictionary *opt2 = opt ? [opt copy] : @{};
+
+    PHAuthorizationStatus st;
+    if (@available(iOS 14.0, *)) st = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+    else st = [PHPhotoLibrary authorizationStatus];
+
+    if (st == PHAuthorizationStatusNotDetermined) {
+        if (@available(iOS 14.0, *)) {
+            [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite handler:^(PHAuthorizationStatus status) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self doScan:cb2 opt:opt2];
+                });
+            }];
+        } else {
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self doScan:cb2 opt:opt2];
+                });
+            }];
+        }
+        return;
+    }
+
+    [self doScan:cb2 opt:opt2];
 }
 
 @end
