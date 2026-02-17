@@ -4,6 +4,21 @@
 
 @implementation PhotoScanner
 
+- (void)ping:(PGMethod *)command {
+    NSString *cb = nil;
+    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
+    if (!cb || cb.length <= 0) {
+        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
+            cb = (NSString*)command.arguments[0];
+        }
+    }
+    if (!cb || cb.length <= 0) return;
+    PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{ @"ok": @YES, @"ver": @"2026-02-17_001" }];
+    [self toCallback:cb withReslut:[res toJSONString]];
+}
+
 - (void)scan:(PGMethod *)command {
     NSString *cb = nil;
     @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
