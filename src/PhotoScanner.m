@@ -111,10 +111,20 @@
         bundle = b.bundleIdentifier ? b.bundleIdentifier : @"";
     } @catch (NSException *e) {}
 
+    NSString *cfgBuild = @"";
+    @try {
+        id v = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"photoscanner"];
+        if ([v isKindOfClass:[NSDictionary class]]) {
+            id b = ((NSDictionary *)v)[@"build"];
+            if ([b isKindOfClass:[NSString class]]) cfgBuild = (NSString *)b;
+        }
+    } @catch (NSException *e) {}
+
     PDRPluginResult *res = [PDRPluginResult resultWithStatus:PDRCommandStatusOK messageAsDictionary:@{
         @"ok": @YES,
         @"ver": @"2026-02-17_002",
         @"build": @PHOTOSCANNER_BUILD,
+        @"cfgBuild": cfgBuild,
         @"date": @__DATE__,
         @"time": @__TIME__,
         @"bundle": bundle,
