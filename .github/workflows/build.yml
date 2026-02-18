@@ -21,7 +21,7 @@ jobs:
           echo "=== dcloud_inc ==="
           ls -la dcloud_inc || true
 
-      - name: Build static framework (iphoneos arm64 only)
+      - name: Build dynamic framework
         shell: bash
         run: |
           set -euo pipefail
@@ -33,10 +33,13 @@ jobs:
           SRC="$ROOT/src/PhotoScanner.m"
 
           rm -rf "$OUT" "$BUILD"
-          mkdir -p "$OUT" "$BUILD/iphoneos"
+          mkdir -p "$OUT" "$BUILD/iphoneos" "$BUILD/iphonesimulator"
 
           IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          COMMON_FLAGS="-fobjc-arc -fmodules -ObjC -I$INC"
+          SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+
+          COMMON_FLAGS="-fobjc-arc -fmodules -fvisibility=hidden -I$INC"
+          LINK_FLAGS="-Wl,-dead_strip -Wl,-undefined,dynamic_lookup"
 
           xcrun clang -c "$SRC" \
             -arch arm64 -isysroot "$IOS_SDK" \
@@ -44,8 +47,49 @@ jobs:
             $COMMON_FLAGS \
             -o "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
-          libtool -static -o "$BUILD/iphoneos/PhotoScanner" \
+          xcrun clang -c "$SRC" \
+            -arch arm64 -isysroot "$SIM_SDK" \
+            -mios-simulator-version-min=12.0 \
+            $COMMON_FLAGS \
+            -o "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
+
+          xcrun clang -c "$SRC" \
+            -arch x86_64 -isysroot "$SIM_SDK" \
+            -mios-simulator-version-min=12.0 \
+            $COMMON_FLAGS \
+            -o "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
+
+          xcrun clang -dynamiclib \
+            -arch arm64 -isysroot "$IOS_SDK" \
+            -miphoneos-version-min=12.0 \
+            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
+            $LINK_FLAGS \
+            -o "$BUILD/iphoneos/PhotoScanner" \
             "$BUILD/iphoneos/PhotoScanner_arm64.o"
+
+          xcrun clang -dynamiclib \
+            -arch arm64 -isysroot "$SIM_SDK" \
+            -mios-simulator-version-min=12.0 \
+            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
+            $LINK_FLAGS \
+            -o "$BUILD/iphonesimulator/PhotoScanner_arm64" \
+            "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
+
+          xcrun clang -dynamiclib \
+            -arch x86_64 -isysroot "$SIM_SDK" \
+            -mios-simulator-version-min=12.0 \
+            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
+            $LINK_FLAGS \
+            -o "$BUILD/iphonesimulator/PhotoScanner_x86_64" \
+            "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
+
+          lipo -create \
+            "$BUILD/iphonesimulator/PhotoScanner_arm64" \
+            "$BUILD/iphonesimulator/PhotoScanner_x86_64" \
+            -output "$BUILD/iphonesimulator/PhotoScanner"
+
+          lipo -info "$BUILD/iphoneos/PhotoScanner"
+          lipo -info "$BUILD/iphonesimulator/PhotoScanner"
 
           FW="$OUT/PhotoScanner.framework"
           mkdir -p "$FW/Headers" "$FW/Modules"
@@ -78,6 +122,7 @@ jobs:
           EOF
 
           cd "$OUT"
+          file PhotoScanner.framework/PhotoScanner
           zip -r PhotoScanner.framework.zip PhotoScanner.framework
 
       - name: Upload artifact
