@@ -64,6 +64,9 @@
 
 /// @brief 获取Core单例对象
 + (PDRCore*)Instance;
+
+/// @brief 获取应用文档目录(对应 _doc)
++ (NSString*)appDocPath;
 #pragma mark - life cycle
 /// @brief 设置shell启动参数
 + (BOOL)initEngineWihtOptions:(NSDictionary *)launchOptions
