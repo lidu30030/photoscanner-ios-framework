@@ -94,14 +94,10 @@
 }
 
 - (void)ping:(PGMethod *)command {
-    NSString *cb = nil;
-    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
+    NSString *cb = command.callBackID;
     if (!cb || cb.length <= 0) {
-        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
-            cb = (NSString*)command.arguments[0];
-        }
+        id a0 = (command.arguments.count > 0) ? command.arguments[0] : nil;
+        if ([a0 isKindOfClass:[NSString class]]) cb = (NSString *)a0;
     }
     if (!cb || cb.length <= 0) return;
 
@@ -134,14 +130,10 @@
 }
 
 - (void)scan:(PGMethod *)command {
-    NSString *cb = nil;
-    @try { cb = [command valueForKey:@"callBackID"]; } @catch (NSException *e) {}
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackId"]; } @catch (NSException *e) {} }
-    if (!cb || cb.length <= 0) { @try { cb = [command valueForKey:@"callbackID"]; } @catch (NSException *e) {} }
+    NSString *cb = command.callBackID;
     if (!cb || cb.length <= 0) {
-        if ([command.arguments count] > 0 && [command.arguments[0] isKindOfClass:[NSString class]]) {
-            cb = (NSString*)command.arguments[0];
-        }
+        id a0 = (command.arguments.count > 0) ? command.arguments[0] : nil;
+        if ([a0 isKindOfClass:[NSString class]]) cb = (NSString *)a0;
     }
     NSDictionary *opt = @{};
     if ([command.arguments count] > 0) {
