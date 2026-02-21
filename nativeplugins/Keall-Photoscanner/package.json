@@ -1,0 +1,20 @@
+{
+	"name": "Keall-Photoscanner",
+	"id": "Keall-Photoscanner",
+	"version": "1.0.2",
+	"description": "iOS PhotoScanner",
+	"_dp_type":"nativeplugin",
+	"_dp_nativeplugin":{
+		"ios": {
+			"plugins": [
+				{
+					"type": "module",
+					"name": "Keall-Photoscanner",
+					"class": "PhotoScanner"
+				}
+			],
+			"integrateType": "library",
+			"deploymentTarget": "8.0"
+		}
+	}
+}
