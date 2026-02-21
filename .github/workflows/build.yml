@@ -40,12 +40,25 @@ jobs:
           COMMON_FLAGS="-fobjc-arc -fmodules -fvisibility=hidden -I$INC"
 
           xcrun clang -c "$SRC" \
+            -arch armv7 -isysroot "$IOS_SDK" \
+            -miphoneos-version-min=8.0 \
+            $COMMON_FLAGS \
+            -o "$BUILD/iphoneos/PhotoScanner_armv7.o"
+
+          xcrun clang -c "$SRC" \
             -arch arm64 -isysroot "$IOS_SDK" \
             -miphoneos-version-min=8.0 \
             $COMMON_FLAGS \
             -o "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
-          xcrun libtool -static -o "$OUT/libPhotoScanner.a" "$BUILD/iphoneos/PhotoScanner_arm64.o"
+          xcrun libtool -static -o "$BUILD/iphoneos/libPhotoScanner_armv7.a" "$BUILD/iphoneos/PhotoScanner_armv7.o"
+          xcrun libtool -static -o "$BUILD/iphoneos/libPhotoScanner_arm64.a" "$BUILD/iphoneos/PhotoScanner_arm64.o"
+
+          lipo -create \
+            "$BUILD/iphoneos/libPhotoScanner_armv7.a" \
+            "$BUILD/iphoneos/libPhotoScanner_arm64.a" \
+            -output "$OUT/libPhotoScanner.a"
+
           lipo -info "$OUT/libPhotoScanner.a"
 
           PKG="$OUT/nativeplugins/keall-photoscanner"
