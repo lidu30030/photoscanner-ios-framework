@@ -61,15 +61,15 @@ jobs:
 
           lipo -info "$OUT/libPhotoScanner.a"
 
-          PKG="$OUT/nativeplugins/keall-photoscanner"
+          PKG="$OUT/nativeplugins/Keall-Photoscanner"
           mkdir -p "$PKG/ios"
           cp "$OUT/libPhotoScanner.a" "$PKG/ios/libPhotoScanner.a"
-          cp "$ROOT/nativeplugins/keall-photoscanner/package.json" "$PKG/package.json"
+          cp "$ROOT/nativeplugins/Keall-Photoscanner/package.json" "$PKG/package.json"
           cd "$OUT"
-          zip -r nativeplugins-keall-photoscanner.zip nativeplugins
+          zip -r nativeplugins-Keall-Photoscanner.zip nativeplugins
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nativeplugins-keall-photoscanner.zip
-          path: out/nativeplugins-keall-photoscanner.zip
+          name: nativeplugins-Keall-Photoscanner.zip
+          path: out/nativeplugins-Keall-Photoscanner.zip
