@@ -1,4 +1,4 @@
-name: build-photoscanner-framework
+name: build-photoscanner-library
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
           echo "=== dcloud_inc ==="
           ls -la dcloud_inc || true
 
-      - name: Build dynamic framework
+      - name: Build static library
         shell: bash
         run: |
           set -euo pipefail
@@ -33,100 +33,30 @@ jobs:
           SRC="$ROOT/src/PhotoScanner.m"
 
           rm -rf "$OUT" "$BUILD"
-          mkdir -p "$OUT" "$BUILD/iphoneos" "$BUILD/iphonesimulator"
+          mkdir -p "$OUT" "$BUILD/iphoneos"
 
           IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
 
           COMMON_FLAGS="-fobjc-arc -fmodules -fvisibility=hidden -I$INC"
-          LINK_FLAGS="-Wl,-dead_strip -Wl,-undefined,dynamic_lookup"
 
           xcrun clang -c "$SRC" \
             -arch arm64 -isysroot "$IOS_SDK" \
-            -miphoneos-version-min=12.0 \
+            -miphoneos-version-min=8.0 \
             $COMMON_FLAGS \
             -o "$BUILD/iphoneos/PhotoScanner_arm64.o"
 
-          xcrun clang -c "$SRC" \
-            -arch arm64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            $COMMON_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
+          xcrun libtool -static -o "$OUT/libPhotoScanner.a" "$BUILD/iphoneos/PhotoScanner_arm64.o"
+          lipo -info "$OUT/libPhotoScanner.a"
 
-          xcrun clang -c "$SRC" \
-            -arch x86_64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            $COMMON_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
-
-          xcrun clang -dynamiclib \
-            -arch arm64 -isysroot "$IOS_SDK" \
-            -miphoneos-version-min=12.0 \
-            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
-            $LINK_FLAGS \
-            -o "$BUILD/iphoneos/PhotoScanner" \
-            "$BUILD/iphoneos/PhotoScanner_arm64.o"
-
-          xcrun clang -dynamiclib \
-            -arch arm64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
-            $LINK_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_arm64" \
-            "$BUILD/iphonesimulator/PhotoScanner_sim_arm64.o"
-
-          xcrun clang -dynamiclib \
-            -arch x86_64 -isysroot "$SIM_SDK" \
-            -mios-simulator-version-min=12.0 \
-            -install_name @rpath/PhotoScanner.framework/PhotoScanner \
-            $LINK_FLAGS \
-            -o "$BUILD/iphonesimulator/PhotoScanner_x86_64" \
-            "$BUILD/iphonesimulator/PhotoScanner_sim_x86_64.o"
-
-          lipo -create \
-            "$BUILD/iphonesimulator/PhotoScanner_arm64" \
-            "$BUILD/iphonesimulator/PhotoScanner_x86_64" \
-            -output "$BUILD/iphonesimulator/PhotoScanner"
-
-          lipo -info "$BUILD/iphoneos/PhotoScanner"
-          lipo -info "$BUILD/iphonesimulator/PhotoScanner"
-
-          FW="$OUT/PhotoScanner.framework"
-          mkdir -p "$FW/Headers" "$FW/Modules"
-
-          cp "$BUILD/iphoneos/PhotoScanner" "$FW/PhotoScanner"
-          cp "$ROOT/src/PhotoScanner.h" "$FW/Headers/PhotoScanner.h"
-
-          cat > "$FW/Modules/module.modulemap" <<'EOF'
-          framework module PhotoScanner {
-            header "PhotoScanner.h"
-            export *
-          }
-          EOF
-
-          cat > "$FW/Info.plist" <<'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleDevelopmentRegion</key><string>en</string>
-            <key>CFBundleExecutable</key><string>PhotoScanner</string>
-            <key>CFBundleIdentifier</key><string>com.photoscanner.framework</string>
-            <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-            <key>CFBundleName</key><string>PhotoScanner</string>
-            <key>CFBundlePackageType</key><string>FMWK</string>
-            <key>CFBundleShortVersionString</key><string>1.0.0</string>
-            <key>CFBundleVersion</key><string>1</string>
-          </dict>
-          </plist>
-          EOF
-
+          PKG="$OUT/nativeplugins/keall-photoscanner"
+          mkdir -p "$PKG/ios"
+          cp "$OUT/libPhotoScanner.a" "$PKG/ios/libPhotoScanner.a"
+          cp "$ROOT/nativeplugins/keall-photoscanner/package.json" "$PKG/package.json"
           cd "$OUT"
-          file PhotoScanner.framework/PhotoScanner
-          zip -r PhotoScanner.framework.zip PhotoScanner.framework
+          zip -r nativeplugins-keall-photoscanner.zip nativeplugins
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PhotoScanner.framework.zip
-          path: out/PhotoScanner.framework.zip
+          name: nativeplugins-keall-photoscanner.zip
+          path: out/nativeplugins-keall-photoscanner.zip
