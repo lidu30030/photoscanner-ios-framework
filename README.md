@@ -1,3 +1,4 @@
-# photoscanner-ios-framework
 
-GitHub Actions build for PhotoScanner.framework
+# photoscanner-ios-library
+
+GitHub Actions build for libPhotoScanner.a

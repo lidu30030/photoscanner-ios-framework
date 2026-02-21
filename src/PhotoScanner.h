@@ -1,8 +1,7 @@
-#import "PGPlugin.h"
 
-#import "PGMethod.h"
-
-@interface PhotoScanner : PGPlugin
-- (void)scan:(PGMethod *)command;
-- (void)ping:(PGMethod *)command;
-@end
+ #import "DCUniModule.h"
+ 
+ @interface PhotoScanner : DCUniModule
+ - (void)ping:(NSDictionary *)options callback:(UniModuleKeepAliveCallback)callback;
+ - (void)scan:(NSDictionary *)options callback:(UniModuleKeepAliveCallback)callback;
+ @end
