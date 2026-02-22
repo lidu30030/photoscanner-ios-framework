@@ -40,8 +40,6 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
         return;
     }
 
-    if (cb) cb(@{ @"ping": @YES }, YES);
-
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         PHFetchOptions *fetchOpt = [[PHFetchOptions alloc] init];
         fetchOpt.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO] ];
@@ -64,9 +62,15 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
             @autoreleasepool {
                 PHAsset *a = [assets objectAtIndex:i];
                 __block NSData *data = nil;
-                [mgr requestImageDataForAsset:a options:reqOpt resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-                    data = imageData;
-                }];
+                if (@available(iOS 13.0, *)) {
+                    [mgr requestImageDataAndOrientationForAsset:a options:reqOpt resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
+                        data = imageData;
+                    }];
+                } else {
+                    [mgr requestImageDataForAsset:a options:reqOpt resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+                        data = imageData;
+                    }];
+                }
                 if (!data || data.length <= 0) continue;
 
                 NSString *name = [NSString stringWithFormat:@"ios_%lld_%ld.jpg", (long long)([[NSDate date] timeIntervalSince1970] * 1000), (long)i];
