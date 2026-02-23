@@ -76,7 +76,7 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
                 NSString *name = [NSString stringWithFormat:@"ios_%lld_%ld.jpg", (long long)([[NSDate date] timeIntervalSince1970] * 1000), (long)i];
                 NSString *abs = [doc stringByAppendingPathComponent:name];
                 if (![data writeToFile:abs atomically:YES]) continue;
-                [buf addObject:@{ @"path": [@"_doc/" stringByAppendingString:name], @"name": name }];
+                [buf addObject:@{ @"path": abs, @"name": name }];
 
                 if (buf.count >= batch) {
                     NSArray *chunk = [buf copy];
