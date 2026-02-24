@@ -122,9 +122,20 @@ UNI_EXPORT_METHOD(@selector(requestFullAccess:callback:))
         PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
         if (st == PHAuthorizationStatusLimited) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                UIViewController *root = [UIApplication sharedApplication].keyWindow.rootViewController;
-                while (root.presentedViewController) root = root.presentedViewController;
-                [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:root];
+                UIWindow *w = [UIApplication sharedApplication].keyWindow;
+if (!w) {
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+        UIWindowScene *ws = (UIWindowScene *)scene;
+        for (UIWindow *w2 in ws.windows) {
+            if (w2.isKeyWindow) { w = w2; break; }
+        }
+        if (w) break;
+    }
+}
+                UIViewController *root = w.rootViewController;
+                while (root && root.presentedViewController) root = root.presentedViewController;
+                if (root) [PHPhotoLibrary presentLimitedLibraryPickerFromViewController:root];
                 if (callback) callback(@{ @"ok": @YES, @"st": @(st) }, NO);
             });
             return;
