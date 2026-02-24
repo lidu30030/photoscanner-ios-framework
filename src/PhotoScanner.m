@@ -4,13 +4,14 @@
 #define PHOTOSCANNER_DOC_DIR @"_doc"
 
 #ifndef PHOTOSCANNER_BUILD
-#define PHOTOSCANNER_BUILD "2026-02-17_002"
+#define PHOTOSCANNER_BUILD "2026-02-24_003"
 #endif
 
 @implementation PhotoScanner
 
 UNI_EXPORT_METHOD(@selector(ping:callback:))
 UNI_EXPORT_METHOD(@selector(scan:callback:))
+UNI_EXPORT_METHOD(@selector(requestFullAccess:callback:))
 
 - (NSString *)docDir {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -100,6 +101,25 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
 
 - (void)ping:(NSDictionary *)options callback:(UniModuleKeepAliveCallback)callback {
     if (callback) callback(@{ @"ok": @YES, @"ping": @YES }, NO);
+}
+
+- (void)requestFullAccess:(NSDictionary *)options callback:(UniModuleKeepAliveCallback)callback {
+    if (@available(iOS 14.0, *)) {
+        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+        if (st == PHAuthorizationStatusLimited) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                UIViewController *root = [UIApplication sharedApplication].keyWindow.rootViewController;
+                while (root.presentedViewController) root = root.presentedViewController;
+                [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:root];
+                if (callback) callback(@{ @"ok": @YES, @"st": @(st) }, NO);
+            });
+            return;
+        }
+        if (callback) callback(@{ @"ok": @YES, @"st": @(st) }, NO);
+    } else {
+        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
+        if (callback) callback(@{ @"ok": @YES, @"st": @(st) }, NO);
+    }
 }
 
 - (void)scan:(NSDictionary *)options callback:(UniModuleKeepAliveCallback)callback {
