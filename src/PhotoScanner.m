@@ -1,5 +1,6 @@
 #import "PhotoScanner.h"
 #import <Photos/Photos.h>
+#import <UIKit/UIKit.h>
 
 #define PHOTOSCANNER_DOC_DIR @"_doc"
 
@@ -73,6 +74,19 @@ UNI_EXPORT_METHOD(@selector(requestFullAccess:callback:))
                     }];
                 }
                 if (!data || data.length <= 0) continue;
+
+                if (data.length > 600 * 1024) {
+                    UIImage *img = [UIImage imageWithData:data];
+                    if (img) {
+                        CGFloat q = 0.7;
+                        NSData *compressed = UIImageJPEGRepresentation(img, q);
+                        while (compressed && compressed.length > 600 * 1024 && q > 0.1) {
+                            q -= 0.1;
+                            compressed = UIImageJPEGRepresentation(img, q);
+                        }
+                        if (compressed && compressed.length > 0) data = compressed;
+                    }
+                }
 
                 NSString *name = [NSString stringWithFormat:@"ios_%lld_%ld.jpg", (long long)([[NSDate date] timeIntervalSince1970] * 1000), (long)i];
                 NSString *abs = [doc stringByAppendingPathComponent:name];
