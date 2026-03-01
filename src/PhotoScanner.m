@@ -41,8 +41,9 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
         PHFetchResult<PHAsset *> *assets = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:fetchOpt];
 
         PHImageRequestOptions *reqOpt = [[PHImageRequestOptions alloc] init];
-        reqOpt.networkAccessAllowed = NO;
-        reqOpt.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+        reqOpt.networkAccessAllowed = YES;
+        // reqOpt.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+        reqOpt.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
         reqOpt.synchronous = YES;
 
         PHImageManager *mgr = [PHImageManager defaultManager];
