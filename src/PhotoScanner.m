@@ -42,7 +42,6 @@ UNI_EXPORT_METHOD(@selector(scan:callback:))
 
         PHImageRequestOptions *reqOpt = [[PHImageRequestOptions alloc] init];
         reqOpt.networkAccessAllowed = YES;
-        // reqOpt.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
         reqOpt.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
         reqOpt.synchronous = YES;
 
